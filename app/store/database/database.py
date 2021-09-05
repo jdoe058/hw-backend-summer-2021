@@ -1,5 +1,6 @@
 import gino
 from gino.api import Gino
+
 from app.store.database.gino import db
 from app.admin.models import *
 from app.quiz.models import *
@@ -28,7 +29,8 @@ class Database:
         )
         self.db = db
         self.db.bind = self._engine
+        self.app.logger.info('Database connected')
 
     async def disconnect(self, *_, **kw):
-        raise NotImplementedError
-
+        #if self.db is not None: await self.db.pop_bind().close()
+        self.app.logger.info('Database disconnected')

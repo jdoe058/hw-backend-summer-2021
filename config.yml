@@ -1,18 +1,18 @@
-user_token: вставьте_ваш_токен_вместо_этой_строки
+user_token: NmE0YzRjMzEtNTM2Zi00NDY5LThmNzItZTE1YmE2MTZkNGE4Xzcx
 
 session:
-  key: key_to_generate
+  key: CaY5iCkYtN7DqXdiYK1BvmGrQuaSA4Tl4bEk9my0jc0=
 admin:
   email: admin@admin.com
   password: admin
 database:
-  host: 0.0.0.0
+  host: 127.0.0.1
   port: 5432
   user: postgres
   password: postgres
   database: postgres
 bot:
-  token: group_token
-  group_id: 1
+  token: 523f9336c303fed692990967079cf930cac6e58e121b60e8e21340841cc619aaa9875a0f24bfd5615a4c4
+  group_id: 206725431
 
 

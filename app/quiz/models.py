@@ -14,11 +14,17 @@ class Theme:
 class ThemeModel(db.Model):
     __tablename__ = "themes"
 
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String)
+
+
 # TODO
 # Дописать все необходимые поля модели
 class AnswerModel(db.Model):
     __tablename__ = "answers"
 
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String)
 
 
 @dataclass
@@ -32,6 +38,9 @@ class Question:
 # Дописать все необходимые поля модели
 class QuestionModel(db.Model):
     __tablename__ = "questions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String)
 
 
 @dataclass

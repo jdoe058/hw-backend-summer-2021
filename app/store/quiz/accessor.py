@@ -1,6 +1,7 @@
 from typing import Optional
 
 from aiohttp.web_exceptions import HTTPException
+from sqlalchemy.sql.elements import or_
 
 from app.base.base_accessor import BaseAccessor
 from app.quiz.models import (
@@ -33,30 +34,36 @@ class QuizAccessor(BaseAccessor):
         return [Theme(**r.to_dict()) for r in res]
 
     async def create_answers(self, question_id, answers: List[Answer]):
-        if answers is not None:
-            val = []
-            for a in answers:
-                val.append({'title': a.title, 'is_correct': a.is_correct, "question_id": question_id})
-            print(val)
-            await AnswerModel.insert().values(val).gino.status()
-        res = await AnswerModel.query.gino.all()
-        print(res)
-
+        for a in answers:
+            await AnswerModel.create(title=a.title, is_correct=a.is_correct, question_id=question_id)
 
     async def create_question(
         self, title: str, theme_id: int, answers: List[Answer]
     ) -> Question:
-        res = (await QuestionModel.create(title=title, theme_id=theme_id)).to_dict()
-        ans = await self.create_answers(res['id'], answers)
-        return Question(**res, answers=ans)
+        res = await QuestionModel.create(title=title, theme_id=theme_id)
+        await self.create_answers(res.id, answers)
+
+        return await self.get_question_by_title(title)
 
     async def get_question_by_title(self, title: str) -> Optional[Question]:
         res = await (
             QuestionModel.outerjoin(AnswerModel, QuestionModel.id == AnswerModel.question_id)
             .select()
-            #.where(QuestionModel.title == title)
+            .where(QuestionModel.title == title)
             .gino
-            .load(QuestionModel.load(answers=AnswerModel))
+            .load(QuestionModel.distinct(QuestionModel.id).load(answers=AnswerModel))
+            .one()
+        )
+
+        return Question(**res.to_dict(), answers=[])
+
+    async def list_questions(self, theme_id: Optional[int] = None) -> List[Question]:
+        res = await (
+            QuestionModel.outerjoin(AnswerModel, QuestionModel.id == AnswerModel.question_id)
+            .select()
+            .where(or_(QuestionModel.theme_id == theme_id, theme_id is None))
+            .gino
+            .load(QuestionModel.distinct(QuestionModel.id).load(answers=AnswerModel))
             .all()
         )
 
@@ -64,15 +71,6 @@ class QuizAccessor(BaseAccessor):
 
         for e in res:
             out.append(
-                {
-                    **e.to_dict(),
-                    'answers': [se.to_dict() for se in e.answers]
-                }
+                Question(**e.to_dict(), answers=[])
             )
-
-        print(out)
-
         return out
-
-    async def list_questions(self, theme_id: Optional[int] = None) -> List[Question]:
-        raise NotImplementedError

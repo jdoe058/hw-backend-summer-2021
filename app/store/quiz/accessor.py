@@ -1,6 +1,7 @@
 from typing import Optional
 
 from aiohttp.web_exceptions import HTTPException
+from gino import NoResultFound
 from sqlalchemy.sql.elements import or_
 
 from app.base.base_accessor import BaseAccessor
@@ -46,16 +47,18 @@ class QuizAccessor(BaseAccessor):
         return await self.get_question_by_title(title)
 
     async def get_question_by_title(self, title: str) -> Optional[Question]:
-        res = await (
-            QuestionModel.outerjoin(AnswerModel, QuestionModel.id == AnswerModel.question_id)
-            .select()
-            .where(QuestionModel.title == title)
-            .gino
-            .load(QuestionModel.distinct(QuestionModel.id).load(answers=AnswerModel))
-            .one()
-        )
-
-        return Question(**res.to_dict(), answers=[])
+        try:
+            res = await (
+                QuestionModel.outerjoin(AnswerModel, QuestionModel.id == AnswerModel.question_id)
+                .select()
+                .where(QuestionModel.title == title)
+                .gino
+                .load(QuestionModel.distinct(QuestionModel.id).load(answers=AnswerModel))
+                .one()
+            )
+            return Question(**res.to_dict(), answers=[Answer(e.title, e.is_correct) for e in res.answers])
+        except NoResultFound:
+            return None
 
     async def list_questions(self, theme_id: Optional[int] = None) -> List[Question]:
         res = await (
@@ -71,6 +74,6 @@ class QuizAccessor(BaseAccessor):
 
         for e in res:
             out.append(
-                Question(**e.to_dict(), answers=[])
+                Question(**e.to_dict(), answers=[Answer(se.title, se.is_correct) for se in e.answers])
             )
         return out

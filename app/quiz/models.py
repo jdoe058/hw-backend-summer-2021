@@ -1,8 +1,6 @@
 from dataclasses import dataclass
 from typing import Optional, List
 
-from sqlalchemy.orm import relationship
-
 from app.store.database.gino import db
 
 
@@ -15,19 +13,29 @@ class Theme:
 class ThemeModel(db.Model):
     __tablename__ = "themes"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, unique=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)  # BigInteger?
+    title = db.Column(db.String, unique=True, nullable=False)  # String(50)
+
+    def to_dc(self) -> Theme:
+        return Theme(**self.to_dict())
 
 
-# TODO
-# Дописать все необходимые поля модели
+@dataclass
+class Answer:
+    title: str
+    is_correct: bool
+
+
 class AnswerModel(db.Model):
     __tablename__ = "answers"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, unique=True, nullable=False)
+    id = db.Column(db.Integer, primary_key=True)    # BigInteger
+    title = db.Column(db.String, unique=True, nullable=False)   # String(50)
     is_correct = db.Column(db.Boolean, nullable=False)
-    question_id = db.Column(db.Integer, db.ForeignKey('questions.id', ondelete="CASCADE"), nullable=False)
+    question_id = db.Column(db.ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
+
+    def to_dc(self) -> Answer:
+        return Answer(title=self.title, is_correct=self.is_correct)
 
 
 @dataclass
@@ -35,24 +43,28 @@ class Question:
     id: Optional[int]
     title: str
     theme_id: int
-    answers: list["Answer"]
+    answers: list[Answer]
 
 
-# TODO
-# Дописать все необходимые поля модели
 class QuestionModel(db.Model):
     __tablename__ = "questions"
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, unique=True)
-    theme_id = db.Column(db.Integer, db.ForeignKey('themes.id'), nullable=False)
-
-    answers = relationship('AnswerModel', cascade='all, delete')
+    title = db.Column(db.String, unique=True, nullable=False)
+    theme_id = db.Column(db.ForeignKey("themes.id", ondelete="CASCADE"), nullable=False)
 
     def __init__(self, **kw):
         super().__init__(**kw)
 
         self._answers: List[AnswerModel] = list()
+
+    def to_dc(self) -> Question:
+        return Question(
+            id=self.id,
+            title=self.title,
+            theme_id=self.theme_id,
+            answers=[a.to_dc() for a in self._answers]
+        )
 
     @property
     def answers(self) -> List[AnswerModel]:
@@ -64,7 +76,3 @@ class QuestionModel(db.Model):
             self._answers.append(val)
 
 
-@dataclass
-class Answer:
-    title: str
-    is_correct: bool

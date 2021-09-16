@@ -1,7 +1,4 @@
-from typing import Optional
-
-from aiohttp.web_exceptions import HTTPException
-from gino import NoResultFound
+from typing import Optional, List
 from sqlalchemy.sql.elements import or_
 
 from app.base.base_accessor import BaseAccessor
@@ -13,67 +10,68 @@ from app.quiz.models import (
     QuestionModel,
     AnswerModel,
 )
-from typing import List
 
 
 class QuizAccessor(BaseAccessor):
-    async def create_theme(self, title: str) -> Theme:
+    @staticmethod
+    async def create_theme(title: str) -> Theme:
         res = await ThemeModel.create(title=title)
-        return Theme(**res.to_dict())
+        return res.to_dc()
 
-
-    async def get_theme_by_title(self, title: str) -> Optional[Theme]:
+    @staticmethod
+    async def get_theme_by_title(title: str) -> Optional[Theme]:
         res = await ThemeModel.query.where(ThemeModel.title == title).gino.first()
-        return Theme(**res.to_dict()) if res else None
+        return None if res is None else res.to_dc()
 
-    async def get_theme_by_id(self, id_: int) -> Optional[Theme]:
-        res = await ThemeModel.query.where(ThemeModel.id == id_).gino.first()
-        return Theme(**res.to_dict()) if res else None
+    @staticmethod
+    async def get_theme_by_id(id_: int) -> Optional[Theme]:
+        res = await ThemeModel.get(id_)
+        return None if res is None else res.to_dc()
 
-    async def list_themes(self) -> List[Theme]:
+    @staticmethod
+    async def list_themes() -> List[Theme]:
         res = await ThemeModel.query.gino.all()
-        return [Theme(**r.to_dict()) for r in res]
+        return [r.to_dc() for r in res]
 
-    async def create_answers(self, question_id, answers: List[Answer]):
-        for a in answers:
-            await AnswerModel.create(title=a.title, is_correct=a.is_correct, question_id=question_id)
+    @staticmethod
+    async def create_answers(question_id, answers: List[Answer]):
+        await AnswerModel.insert().gino.all(
+            [
+                {
+                    "title": a.title,
+                    "is_correct": a.is_correct,
+                    "question_id": question_id
+                }
+                for a in answers
+            ]
+        )
 
     async def create_question(
         self, title: str, theme_id: int, answers: List[Answer]
     ) -> Question:
-        res = await QuestionModel.create(title=title, theme_id=theme_id)
-        await self.create_answers(res.id, answers)
+        obj = await QuestionModel.create(title=title, theme_id=theme_id)
+        question = obj.to_dc()
+        await self.create_answers(question.id, answers)
+        question.answers = answers
 
-        return await self.get_question_by_title(title)
+        return question
+
+    @staticmethod
+    def _get_questions_join():
+        return QuestionModel.outerjoin(AnswerModel, QuestionModel.id == AnswerModel.question_id).select()
+
+    @staticmethod
+    def _get_questions_load(query):
+        return query.gino.load(QuestionModel.distinct(QuestionModel.id).load(answers=AnswerModel)).all()
 
     async def get_question_by_title(self, title: str) -> Optional[Question]:
-        try:
-            res = await (
-                QuestionModel.outerjoin(AnswerModel, QuestionModel.id == AnswerModel.question_id)
-                .select()
-                .where(QuestionModel.title == title)
-                .gino
-                .load(QuestionModel.distinct(QuestionModel.id).load(answers=AnswerModel))
-                .one()
-            )
-            return Question(**res.to_dict(), answers=[Answer(e.title, e.is_correct) for e in res.answers])
-        except NoResultFound:
-            return None
+        query = self._get_questions_join().where(QuestionModel.title == title)
+        questions = await self._get_questions_load(query)
+
+        return None if not questions else questions[0].to_dc()
 
     async def list_questions(self, theme_id: Optional[int] = None) -> List[Question]:
-        res = await (
-            QuestionModel.outerjoin(AnswerModel, QuestionModel.id == AnswerModel.question_id)
-            .select()
-            .where(or_(QuestionModel.theme_id == theme_id, theme_id is None))
-            .gino
-            .load(QuestionModel.distinct(QuestionModel.id).load(answers=AnswerModel))
-            .all()
-        )
+        query = self._get_questions_join().where(or_(QuestionModel.theme_id == theme_id, theme_id is None))
+        questions = await self._get_questions_load(query)
 
-        out = []
-
-        for e in res:
-            out.append(
-                Question(**e.to_dict(), answers=[Answer(se.title, se.is_correct) for se in e.answers])
-            )
-        return out
+        return [q.to_dc() for q in questions]

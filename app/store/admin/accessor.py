@@ -16,11 +16,12 @@ class AdminAccessor(BaseAccessor):
             email=app.config.admin.email, password=app.config.admin.password
         )
 
-    async def get_by_email(self, email: str) -> Optional[Admin]:
+    @staticmethod
+    async def get_by_email(email: str) -> Optional[Admin]:
         res = await AdminModel.query.where(AdminModel.email == email).gino.first()
         return Admin(**res.to_dict()) if res else None
 
-    async def create_admin(self, email: str, password: str) -> Admin:
+    async def create_admin(self, email: str, password: str) -> Optional[Admin]:
         self.app.logger.info('admin create')
         admin = await self.get_by_email(email)
         if admin is None:

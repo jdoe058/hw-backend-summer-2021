@@ -36,10 +36,19 @@ class AdminCurrentView(View):
 class AdminFetchGamesView(AuthRequiredMixin, View):
     @response_schema(ListResponseSchema, 200)
     async def get(self):
-        pass
+        games = {'total': 0, 'games': []}
+        return json_response(data=ListResponseSchema().dump(games))
 
 
 class AdminFetchGameStatsView(AuthRequiredMixin, View):
     @response_schema(GameStatsSchema, 200)
     async def get(self):
-        pass
+        stats = {
+            'games_average_per_day': 0,
+            'winners_top': [],
+            'duration_total': 0,
+            'games_total': 0,
+            'duration_average': 0
+
+        }
+        return json_response(data=GameStatsSchema().dump(stats))

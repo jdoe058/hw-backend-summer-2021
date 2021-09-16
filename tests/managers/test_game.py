@@ -1,4 +1,22 @@
-from tests.utils import ok_response
+from app.game.models import WinnerInfo, Player
+from app.store import Store
+from tests.utils import ok_response, check_empty_table_exists
+
+
+class TestPlayerStore:
+    async def test_table_exists(self, cli):
+        await check_empty_table_exists(cli, "themes")
+
+    async def test_create_theme(self, cli, store: Store):
+        first_name = "John"
+        last_name = "Doe"
+        player = await store.games.add_player(first_name=first_name, last_name=last_name)
+        assert type(player) is WinnerInfo
+        assert player.last_name == last_name and player.first_name == first_name and player.vk_id == 1
+
+        db = cli.app.database.db
+        players = await Player.query.gino.all()
+        assert len(players) == 1
 
 
 class TestAdminFetchGamesView:

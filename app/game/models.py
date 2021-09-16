@@ -48,6 +48,9 @@ class Player(db.Model):
     first_name = db.Column(db.String(50))
     last_name = db.Column(db.String(50))
 
+    def to_dc(self) -> WinnerInfo:
+        return WinnerInfo(**self.to_dict(), win_count=0)
+
     @property
     def count_win(self) -> int:
         return 0

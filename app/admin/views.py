@@ -2,9 +2,11 @@ from aiohttp_apispec import request_schema, response_schema
 from aiohttp_session import new_session
 
 from app.admin.schemes import AdminSchema
+from app.game.schemes import ListResponseSchema, GameStatsSchema
 from app.web.app import View
 from aiohttp.web import HTTPForbidden, HTTPUnauthorized
 
+from app.web.mixins import AuthRequiredMixin
 from app.web.utils import json_response
 
 
@@ -29,3 +31,15 @@ class AdminCurrentView(View):
         if self.request.admin:
             return json_response(data=AdminSchema().dump(self.request.admin))
         raise HTTPUnauthorized
+
+
+class AdminFetchGamesView(AuthRequiredMixin, View):
+    @response_schema(ListResponseSchema, 200)
+    async def get(self):
+        pass
+
+
+class AdminFetchGameStatsView(AuthRequiredMixin, View):
+    @response_schema(GameStatsSchema, 200)
+    async def get(self):
+        pass

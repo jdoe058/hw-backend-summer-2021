@@ -13,8 +13,8 @@ class Theme:
 class ThemeModel(db.Model):
     __tablename__ = "themes"
 
-    id = db.Column(db.Integer, primary_key=True)  # BigInteger?
-    title = db.Column(db.String, unique=True, nullable=False)  # String(50)
+    id = db.Column(db.BigInteger, primary_key=True)
+    title = db.Column(db.String(50), unique=True, nullable=False)
 
     def to_dc(self) -> Theme:
         return Theme(**self.to_dict())
@@ -29,8 +29,8 @@ class Answer:
 class AnswerModel(db.Model):
     __tablename__ = "answers"
 
-    id = db.Column(db.Integer, primary_key=True)    # BigInteger
-    title = db.Column(db.String, unique=True, nullable=False)   # String(50)
+    id = db.Column(db.BigInteger, primary_key=True)
+    title = db.Column(db.String(50), unique=True, nullable=False)
     is_correct = db.Column(db.Boolean, nullable=False)
     question_id = db.Column(db.ForeignKey("questions.id", ondelete="CASCADE"), nullable=False)
 
@@ -49,8 +49,9 @@ class Question:
 class QuestionModel(db.Model):
     __tablename__ = "questions"
 
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String, unique=True, nullable=False)
+    id = db.Column(db.BigInteger, primary_key=True)
+    title = db.Column(db.String(50), unique=True, nullable=False)
+    points = db.Column(db.Integer, default=1)
     theme_id = db.Column(db.ForeignKey("themes.id", ondelete="CASCADE"), nullable=False)
 
     def __init__(self, **kw):

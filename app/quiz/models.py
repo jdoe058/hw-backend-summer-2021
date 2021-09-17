@@ -51,7 +51,7 @@ class QuestionModel(db.Model):
 
     id = db.Column(db.BigInteger, primary_key=True)
     title = db.Column(db.String(50), unique=True, nullable=False)
-    points = db.Column(db.Integer, default=1)
+    # points = db.Column(db.Integer, default=1)
     theme_id = db.Column(db.ForeignKey("themes.id", ondelete="CASCADE"), nullable=False)
 
     def __init__(self, **kw):
@@ -75,5 +75,3 @@ class QuestionModel(db.Model):
     def answers(self, val: Optional[AnswerModel]):
         if val is not None:
             self._answers.append(val)
-
-

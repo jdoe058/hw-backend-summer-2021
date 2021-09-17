@@ -1,7 +1,8 @@
 from datetime import datetime
+from typing import List
 
 import pytest
-from app.game.models import WinnerInfo, Player, Game, GameModel
+from app.game.models import WinnerInfo, PlayerModel, Game, GameModel, Player, AnswersPlayersModel
 from app.store import Store
 from tests.game import game2dict
 from tests.utils import ok_response, check_empty_table_exists
@@ -11,17 +12,11 @@ class TestPlayerStore:
     async def test_table_exists(self, cli):
         await check_empty_table_exists(cli, "players")
 
-    # TO-DO понять почему id != 1!
-    async def test_add_player(self, cli, store: Store):
-        first_name = "John"
-        last_name = "Doe"
-        player = await store.games.create_player(first_name, last_name)
-        assert type(player) is WinnerInfo
-        assert player.last_name == last_name and player.first_name == first_name  # and player.vk_id == 1
+    async def test_add_players(self, cli, store: Store, players: List[Player]):
+        await store.games.create_players(players)
 
-        # db = cli.app.database.db
-        players = await Player.query.gino.all()
-        assert len(players) == 1
+        obj = await PlayerModel.query.gino.all()
+        assert [o.to_dc() for o in obj] == players
 
 
 class TestGameStore:
@@ -39,6 +34,10 @@ class TestGameStore:
 
         games = await GameModel.query.gino.all()
         assert len(games) == 1
+
+    async def test_create_players_answers(self, store: Store, answers_players):
+        obj = await AnswersPlayersModel.query.gino.all()
+        assert [o.to_dc() for o in obj] == answers_players
 
 
 class TestAdminFetchGamesView:

@@ -40,22 +40,26 @@ class GameModel(db.Model):
 
 
 @dataclass
-class WinnerInfo:
+class Player:
     vk_id: int
-    win_count: int
     first_name: str
     last_name: str
 
 
-class Player(db.Model):
+@dataclass
+class WinnerInfo(Player):
+    win_count: int
+
+
+class PlayerModel(db.Model):
     __tablename__ = "players"
 
     vk_id = db.Column(db.Integer, primary_key=True)
     first_name = db.Column(db.String(50))
     last_name = db.Column(db.String(50))
 
-    def to_dc(self) -> WinnerInfo:
-        return WinnerInfo(**self.to_dict(), win_count=0)
+    def to_dc(self) -> Player:
+        return Player(**self.to_dict())
 
     @property
     def count_win(self) -> int:
@@ -66,13 +70,22 @@ class Player(db.Model):
         return 0
 
 
-class AnswersPlayers(db.Model):
+@dataclass
+class AnswersPlayers:
+    vk_id: int
+    game_id: int
+
+
+class AnswersPlayersModel(db.Model):
     __tablename__ = "answers_players"
 
     id = db.Column(db.BigInteger, primary_key=True)
     vk_id = db.Column(db.ForeignKey("players.vk_id"), nullable=False)
     game_id = db.Column(db.ForeignKey("games.id"), nullable=False)
-    answer_id = db.Column(db.ForeignKey("answers.id"), nullable=False)
+    # answer_id = db.Column(db.ForeignKey("answers.id"), nullable=False)
+
+    def to_dc(self) -> AnswersPlayers:
+        return AnswersPlayers(vk_id=self.vk_id, game_id=self.game_id)
 
 
 @dataclass

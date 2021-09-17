@@ -3,7 +3,8 @@ from typing import List
 
 import pytest
 
-from app.game.models import Game, Player, AnswersPlayers
+from app.game.models import Game, Player, AnswersPlayers, Winner
+from tests.game import game2dict
 
 
 @pytest.fixture
@@ -18,6 +19,7 @@ def players(store) -> List[Player]:
 @pytest.fixture
 async def answers_players(store, players, game_1, game_2, game_3) -> List[AnswersPlayers]:
     return [
+        AnswersPlayers(game_id=game_1.id, vk_id=players[0].vk_id),
         AnswersPlayers(game_id=game_1.id, vk_id=players[0].vk_id),
         AnswersPlayers(game_id=game_1.id, vk_id=players[0].vk_id),
         AnswersPlayers(game_id=game_1.id, vk_id=players[1].vk_id),
@@ -40,8 +42,11 @@ async def answers_players_create(store, players, answers_players) -> List[Answer
 async def answers_players_games(store, players, answers_players, game_1, game_2, game_3) -> List[Game]:
     await store.games.create_players(players)
     await store.games.create_players_answers(answers_players)
-
-    yield [game_1, game_2, game_3]
+    yield [
+        game2dict(game_1, Winner(players[0].vk_id, 3)),
+        game2dict(game_2, Winner(players[1].vk_id, 2)),
+        game2dict(game_3)
+    ]
 
 
 @pytest.fixture

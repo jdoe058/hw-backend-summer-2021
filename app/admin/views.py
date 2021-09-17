@@ -51,4 +51,5 @@ class AdminFetchGameStatsView(AuthRequiredMixin, View):
             'duration_average': 0
 
         }
+        stat = await self.store.games.fetch_game_stats()
         return json_response(data=GameStatsSchema().dump(stats))

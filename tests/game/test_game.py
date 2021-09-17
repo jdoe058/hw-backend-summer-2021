@@ -72,13 +72,13 @@ class TestAdminFetchGamesView:
         assert resp.status == 200
         data = await resp.json()
         print(data)
-        assert data == ok_response(data={"total": 2, "games": [game2dict(game_2), game2dict(game_1)]})
+        assert data == ok_response(data={"total": 2, "games": [game2dict(game_1), game2dict(game_2)]})
 
-    async def test_success1(self, authed_cli, answers_players_create):
+    async def test_success1(self, authed_cli, answers_players_games):
         resp = await authed_cli.get("/admin.fetch_games")
         assert resp.status == 200
         data = await resp.json()
-        assert data == ok_response(data={"total": 3, "games": answers_players_games})
+        assert data == ok_response(data={"total": 3, "games": answers_players_games })
 
 
 class TestAdminFetchGameStatsView:
@@ -108,3 +108,8 @@ class TestAdminFetchGameStatsView:
                 "duration_average": 0,
             }
         )
+
+    async def test_success2(self, authed_cli, answers_players_create):
+        resp = await authed_cli.get("/admin.fetch_game_stats")
+        assert resp.status == 200
+        data = await resp.json()

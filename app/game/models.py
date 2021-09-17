@@ -16,7 +16,7 @@ class Game:
     chat_id: int
     started_at: str
     duration: int
-    # winner: Optional[Winner]
+    winner: Optional[Winner]
     finished_at: Optional[str]
 
 
@@ -35,8 +35,22 @@ class GameModel(db.Model):
     duration = db.Column(db.Integer, nullable=False)
     finished_at = db.Column(db.DateTime)
 
+    def __init__(self, **kw):
+        super().__init__(**kw)
+
+        self._winner: Optional[Winner] = None
+
+    @property
+    def winner(self) -> Winner:
+        return self._winner
+
+    @winner.setter
+    def winner(self, val: Optional[Winner]):
+        if val is not None:
+            self._winner = val
+
     def to_dc(self) -> Game:
-        return Game(**self.to_dict())
+        return Game(**self.to_dict(), winner=self._winner)
 
 
 @dataclass

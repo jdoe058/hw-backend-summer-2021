@@ -4,6 +4,7 @@ from typing import List
 import pytest
 from app.game.models import WinnerInfo, PlayerModel, Game, GameModel, Player, AnswersPlayersModel
 from app.store import Store
+from tests.fixtures import answers_players_games
 from tests.game import game2dict
 from tests.utils import ok_response, check_empty_table_exists
 
@@ -35,9 +36,9 @@ class TestGameStore:
         games = await GameModel.query.gino.all()
         assert len(games) == 1
 
-    async def test_create_players_answers(self, store: Store, answers_players):
+    async def test_create_players_answers(self, store: Store, answers_players_create):
         obj = await AnswersPlayersModel.query.gino.all()
-        assert [o.to_dc() for o in obj] == answers_players
+        assert [o.to_dc() for o in obj] == answers_players_create
 
 
 class TestAdminFetchGamesView:
@@ -72,6 +73,12 @@ class TestAdminFetchGamesView:
         data = await resp.json()
         print(data)
         assert data == ok_response(data={"total": 2, "games": [game2dict(game_2), game2dict(game_1)]})
+
+    async def test_success1(self, authed_cli, answers_players_create):
+        resp = await authed_cli.get("/admin.fetch_games")
+        assert resp.status == 200
+        data = await resp.json()
+        assert data == ok_response(data={"total": 3, "games": answers_players_games})
 
 
 class TestAdminFetchGameStatsView:

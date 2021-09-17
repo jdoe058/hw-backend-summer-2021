@@ -1,7 +1,11 @@
 from typing import List
 
+from gino.loader import ColumnLoader
+
 from app.base.base_accessor import BaseAccessor
-from app.game.models import Game, PlayerModel, GameModel, ListResponse, AnswersPlayersModel, Player, AnswersPlayers
+from app.game.models import Game, PlayerModel, GameModel, ListResponse, AnswersPlayersModel, Player, AnswersPlayers, \
+    Winner
+from app.store.database.gino import db
 
 
 class GameAccessor(BaseAccessor):
@@ -40,7 +44,11 @@ class GameAccessor(BaseAccessor):
 
     @staticmethod
     async def fetch_games() -> ListResponse:
-        obj = await GameModel.outerjoin(AnswersPlayersModel).select().gino.load(GameModel).all()
+        cnt = db.func.count(AnswersPlayersModel.id)
+        obj = await GameModel.outerjoin(AnswersPlayersModel, GameModel.id == AnswersPlayersModel.game_id)\
+            .select()\
+            .group_by(GameModel.id, AnswersPlayersModel.vk_id)\
+            .gino.load(GameModel.load(winner=Winner(vk_id=AnswersPlayersModel.vk_id, points=cnt))).all()
         return ListResponse(total=len(obj), games=[o.to_dc() for o in obj])
 
     async def fetch_game_stats(self):

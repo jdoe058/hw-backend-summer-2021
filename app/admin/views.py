@@ -36,7 +36,7 @@ class AdminCurrentView(View):
 class AdminFetchGamesView(AuthRequiredMixin, View):
     @response_schema(ListResponseSchema, 200)
     async def get(self):
-        games = {'total': 0, 'games': []}
+        games = await self.store.games.fetch_games()
         return json_response(data=ListResponseSchema().dump(games))
 
 

@@ -16,8 +16,14 @@ class Game:
     chat_id: int
     started_at: str
     duration: int
-    winner: Optional[Winner]
+    # winner: Optional[Winner]
     finished_at: Optional[str]
+
+
+@dataclass
+class ListResponse:
+    total: int
+    games: List[Game]
 
 
 class GameModel(db.Model):

@@ -7,10 +7,10 @@ class WinnerScheme(Schema):
 
 
 class GameSchema(Schema):
-    id = fields.Str(required=True)
+    id = fields.Int(required=True)
     chat_id = fields.Int(required=True)
-    started_at = fields.DateTime()
-    duration = fields.Number()
+    started_at = fields.Str()
+    duration = fields.Int()
     winner = fields.Nested(WinnerScheme)
     finished_at = fields.DateTime()
 
